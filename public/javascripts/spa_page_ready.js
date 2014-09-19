@@ -58,9 +58,7 @@
          var that = this,
              opts = that.opts;
          if (_.isFunction(fn)) {
-            return _.once(function () {
-               fn();
-            });
+            return _.once(fn);
          } else {
             return nullFn;
          }
@@ -103,13 +101,6 @@
       }
 
 
-   };
-
-   $.fn.spaPageReady = function (options) {
-      var elem = this[0];
-      if (elem) {
-         PR.init(options);
-      }
    };
 
    // Be a requireJS module
