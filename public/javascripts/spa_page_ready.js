@@ -1,4 +1,4 @@
-;(function ($, _) {
+;(function (W, $, _) {
 
    //
    // TODO: JSONP - Global events are never fired for cross-domain script or JSONP requests.
@@ -11,7 +11,8 @@
        nullFn = function () {};
 
    var defaults = {
-      debug: false
+      debug: false,
+      timeout: 10000
    };
 
    var PR = {
@@ -33,21 +34,52 @@
        * @public
        */
       init : function (options) {
-         this.opts = _.extend(defaults,
+         var that = this;
+         that.opts = _.extend(defaults,
                               options || {},
                               { criticalElsFn : options.criticalElsFn || _.bind(_existsAll, {}, options.criticalEls || []),
-                                criticalFn: _.isFunction(options.criticalFn) ? _.once(options.criticalFn) : nullFn,
+                                criticalFn: that._wrapCompleteFn(options.criticalFn),
                                 finishElsFn: options.finishElsFn || _.bind(_existsAll, {}, options.finishEls || []),
-                                finishFn: _.isFunction(options.finishFn) ? _.once(options.finishFn) : nullFn
+                                finishFn: that._wrapCompleteFn(options.finishFn),
+                                timeoutFn: _.isFunction(options.timeoutFn) ? options.timeoutFn : nullFn
                               }
                              );
-         this.bindAjaxComplete();
+
+         // Only 2 callback handlers will be executed, criticalFn and finishFn.
+         // Update this number accordingly when support more.
+         that.handlers = 2;
+         // how many handlers have been executed.
+         that.exeCount = 0;
+
+         that.bindAjaxComplete();
+
+         W.setTimeout(function () {
+            that.executeTimeout();
+         }, that.opts.timeout);
+      },
+
+      /**
+       * Wrap those functions that will be execute at ajax complete in order to count functions has been executed.
+       *
+       * @private
+       */
+      _wrapCompleteFn : function (fn) {
+         var that = this,
+             opts = that.opts;
+         if (_.isFunction(fn)) {
+            return _.once(function () {
+               fn();
+               that.exeCount++;
+            });
+         } else {
+            return nullFn;
+         }
       },
 
       bindAjaxComplete : function () {
          var that = this,
              opts = that.opts;
-         $(document)
+         $(W.document)
             .ajaxComplete(function (res, a, xhr) {
 
                if (opts.debug) {
@@ -60,7 +92,22 @@
                   opts.finishFn();
                }
             });
+      },
+
+      /**
+       * If criticalFn or finishFn not got executed at timeout, some erros colud happen.
+       * Therefore, execute the timout function.
+       */
+      executeTimeout : function () {
+         var opts = this.opts;
+         if (this.exeCount !== this.handlers) {
+            if (this.opts.debug) {
+               console.log("===== Timeout ====");
+            }
+            this.opts.timeoutFn();
+         }
       }
+
 
    };
 
@@ -79,14 +126,20 @@
 
    $('body').spaPageReady({
       debug: true,
-      criticalEls : ['#div2-internal', '#div3-internal'],
-      finishEls : ['#div5-internal'],
-      criticalFn : function () {
+      timeout: 8000,
+      criticalEls: ['#div2-internal', '#div3-internal'],
+      finishEls: ['#div5-internal'],
+      //finishElsFn: function () { return false; },
+
+      criticalFn: function () {
          console.warn(" ================ CRITICAL ELEMENTS DONE ===========");
       },
-      finishFn : function () {
+      finishFn: function () {
          console.warn(" ================ PAGE DONE ===========");
+      },
+      timeoutFn: function () {
+         console.warn(" ================ PAGE Timout ===========");
       }
    });
 
-})(jQuery, _);
+})(window, jQuery, _);
