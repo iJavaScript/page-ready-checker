@@ -1,9 +1,5 @@
 ;(function (W, $, _) {
 
-   //
-   // TODO: JSONP - Global events are never fired for cross-domain script or JSONP requests.
-   //
-
    var VERSION = "0.0.1";
 
    var _exists = function (x) { return $(x).length >= 1; },
@@ -12,7 +8,7 @@
 
    var defaults = {
       debug: false,
-      timeout: 10000
+      timeout: 30000
    };
 
    var PR = {
@@ -45,17 +41,12 @@
                               }
                              );
 
-         // Only 2 callback handlers will be executed, criticalFn and finishFn.
-         // Update this number accordingly when support more.
-         that.handlers = 2;
-         // how many handlers have been executed.
-         that.exeCount = 0;
+         that.timer = W.setTimeout(function () {
+            that._executeTimeout();
+         }, that.opts.timeout);
 
          that.bindAjaxComplete();
 
-         W.setTimeout(function () {
-            that.executeTimeout();
-         }, that.opts.timeout);
       },
 
       /**
@@ -69,43 +60,46 @@
          if (_.isFunction(fn)) {
             return _.once(function () {
                fn();
-               that.exeCount++;
             });
          } else {
             return nullFn;
          }
       },
 
+      /**
+       * Bind to glabal ajax complete.
+       */
       bindAjaxComplete : function () {
-         var that = this,
-             opts = that.opts;
-         $(W.document)
-            .ajaxComplete(function (res, a, xhr) {
+         $(W.document).ajaxComplete(_.bind(this.ajaxCompleteFn, this));
+      },
 
-               if (opts.debug) {
-                  console.log("complete", new Date(), xhr.url);
-               }
-               if (opts.criticalElsFn()) {
-                  opts.criticalFn();
-               }
-               if (opts.finishElsFn()) {
-                  opts.finishFn();
-               }
-            });
+      ajaxCompleteFn : function (res, a ,xhr) {
+         var opts = this.opts;
+         if (opts.debug) {
+            console.log("complete", new Date(), !!xhr ? xhr.url : '');
+         }
+         if (opts.criticalElsFn()) {
+            opts.criticalFn();
+         }
+         // Cant say page finish if critical elements have not been loaded.
+         if (opts.criticalElsFn() && opts.finishElsFn()) {
+            opts.finishFn();
+            W.clearTimeout(this.timer);
+         }
       },
 
       /**
        * If criticalFn or finishFn not got executed at timeout, some erros colud happen.
-       * Therefore, execute the timout function.
+       * Therefore, execute the timout function. This function won't be executed unless there are errors.
+       *
+       * @see #ajaxComplete how this timer be clear.
        */
-      executeTimeout : function () {
+      _executeTimeout : function () {
          var opts = this.opts;
-         if (this.exeCount !== this.handlers) {
-            if (this.opts.debug) {
-               console.log("===== Timeout ====");
-            }
-            this.opts.timeoutFn();
+         if (opts.debug) {
+            console.log("timeout", new Date());
          }
+         opts.timeoutFn();
       }
 
 
@@ -118,28 +112,14 @@
       }
    };
 
+   // Be a requireJS module
    if (typeof define !== "undefined") {
       define([], function () {
          return PR;
       });
    }
 
-   $('body').spaPageReady({
-      debug: true,
-      timeout: 8000,
-      criticalEls: ['#div2-internal', '#div3-internal'],
-      finishEls: ['#div5-internal'],
-      //finishElsFn: function () { return false; },
-
-      criticalFn: function () {
-         console.warn(" ================ CRITICAL ELEMENTS DONE ===========");
-      },
-      finishFn: function () {
-         console.warn(" ================ PAGE DONE ===========");
-      },
-      timeoutFn: function () {
-         console.warn(" ================ PAGE Timout ===========");
-      }
-   });
+   // Publish to windows
+   W.PR = PR;
 
 })(window, jQuery, _);
