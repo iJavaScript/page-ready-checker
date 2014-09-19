@@ -1,4 +1,4 @@
-page-ready-checker
+Page ready checker
 ==================
 
 How could say a page a ready while they are many components to be render via ajax calls?
