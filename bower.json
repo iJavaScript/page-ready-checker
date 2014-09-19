@@ -1,0 +1,19 @@
+{
+  "name": "spa-page-ready",
+  "version": "0.0.1",
+  "authors": [
+    "HaishengWu <freizl@gmail.com>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "devDependencies": {
+    "underscore": "~1.7.0"
+  }
+}

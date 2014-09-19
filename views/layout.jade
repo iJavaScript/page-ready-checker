@@ -1,0 +1,17 @@
+doctype html
+html
+  head
+    title= title
+    link(rel='stylesheet', href='/stylesheets/style.css')
+  body
+    block content
+    script(src="/bower_components/jquery/dist/jquery.js")
+    script(src="/bower_components/underscore/underscore.js")
+    script(src="/javascripts/spa_page_ready.js")
+    | <script>
+    | window.onload = function () { 
+    |   $.getScript("/javascripts/main.js");
+    | };
+    | </script>
+        
+      
