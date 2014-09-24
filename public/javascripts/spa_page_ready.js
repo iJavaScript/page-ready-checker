@@ -16,16 +16,11 @@
        *
        * options {Object}
        *   ^^ simple options
-       *   - criticalEls : List of jQuery selectors for critical elements
-       *   - finishEls : List of jQuery selectors for those elements that we could call page finish load when they are appeared.
-       *   - criticalFn : A function which be executed once when all critical elements has been loaded.
-       *   - finishEls : List of jQuery selectors for finish elements
-       *   - finishFn : A function which be executed once when all finish elements has been loaded.
+       *   - criticalEls : List of jQuery selectors for critical elements; OR a function to determine whether critical elements have been loaded.
+       *   - critacalFn : A function will be executed once when all critical elements has been loaded.
+       *   - pageReadyFn : A function which be executed once when no further ajax call.
+       *   - timeoutFn: A function will be executed after timeout when page is not ready.
        *   - debug: display debug informations. default to false.
-       *
-       *   ^^ advance options
-       *   - criticalElsFn : A function to determine whether all critical elements has been loaded.
-       *   - finishElsFn : A function  to determine whether all finish elements has been loaded.
        *
        * @public
        */
@@ -33,11 +28,10 @@
          var that = this;
          that.opts = _.extend(defaults,
                               options || {},
-                              { criticalElsFn : options.criticalElsFn || _.bind(_existsAll, {}, options.criticalEls || []),
-                                criticalFn: that._wrapCompleteFn(options.criticalFn),
-                                finishElsFn: options.finishElsFn || _.bind(_existsAll, {}, options.finishEls || []),
-                                finishFn: that._wrapCompleteFn(options.finishFn),
-                                timeoutFn: _.isFunction(options.timeoutFn) ? options.timeoutFn : nullFn
+                              { criticalEls : this._wrapCriticalEls(options.criticalEls),
+                                criticalFn: this._onceFnDefault(options.criticalFn),
+                                pageReadyFn: this._onceFnDefault(options.pageReadyFn),
+                                timeoutFn: this._onceFnDefault(options.timeoutFn)
                               }
                              );
 
@@ -45,16 +39,32 @@
             that._executeTimeout();
          }, that.opts.timeout);
 
-         that.bindAjaxComplete();
+         that.bindGlobalAjaxEvents();
 
       },
+
+       /**
+        * @arguments critcilaEls {Array | Function} Could be list of jquery selectors that indicate critical elements
+        *                                           or a function that determine whether critical elements have been lodaed.
+        * @private
+        */
+       _wrapCriticalEls : function () {
+           var ag1 = arguments[0];
+           if (_.isArray(ag1) && ! _.isEmpty(ag1)) {
+               return _.bind(_existsAll, {}, ag1);
+           } else if (_.isFunction(ag1)) {
+               return ag1;
+           } else {
+               return nullFn;
+           }
+       },
 
       /**
        * Wrap those functions that will be execute at ajax complete in order to count functions has been executed.
        *
        * @private
        */
-      _wrapCompleteFn : function (fn) {
+      _onceFnDefault : function (fn) {
          var that = this,
              opts = that.opts;
          if (_.isFunction(fn)) {
@@ -67,22 +77,29 @@
       /**
        * Bind to glabal ajax complete.
        */
-      bindAjaxComplete : function () {
-         $(W.document).ajaxComplete(_.bind(this.ajaxCompleteFn, this));
+      bindGlobalAjaxEvents : function () {
+          $(W.document).ajaxComplete(_.bind(this.ajaxCompleteFn, this))
+              .ajaxStop(_.bind(this.ajaxStopFn, this));
       },
+
+       ajaxStopFn: function () {
+           var opts = this.opts;
+
+           if (opts.debug) {
+               console.log(" >>>>>>>>>>> ajax stop <<<<<<<<<<<<<< ", arguments);
+           }
+
+           opts.pageReadyFn();
+           W.clearTimeout(this.timer);
+       },
 
       ajaxCompleteFn : function (res, a ,xhr) {
          var opts = this.opts;
          if (opts.debug) {
             console.log("complete", new Date(), !!xhr ? xhr.url : '');
          }
-         if (opts.criticalElsFn()) {
+         if (opts.criticalEls()) {
             opts.criticalFn();
-         }
-         // Cant say page finish if critical elements have not been loaded.
-         if (opts.criticalElsFn() && opts.finishElsFn()) {
-            opts.finishFn();
-            W.clearTimeout(this.timer);
          }
       },
 

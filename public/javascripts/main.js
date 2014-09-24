@@ -11,15 +11,14 @@
       criticalEls: ['#div2-internal', '#div3-internal', '#jsonp-internal'],
       //criticalElsFn: function () { return false; },
 
-      finishEls: ['#div5-internal'],
-      //finishElsFn: function () { return false; },
-
       criticalFn: function () {
          console.warn(" ================ CRITICAL ELEMENTS DONE ===========");
       },
-      finishFn: function () {
+
+      pageReadyFn: function () {
          console.warn(" ================ PAGE DONE ===========");
       },
+
       timeoutFn: function () {
          console.warn(" ================ PAGE Timout ===========");
       }
@@ -51,7 +50,7 @@
    }
 
    function _onloadHandler () {
-      $.get(_getUrl('name1', 100))
+       $.get(_getUrl('name1', 100))
          .done(function (res) {
 
             $('#div1').html('<p id="div1-internal">' + res.name + '</p>');
@@ -78,6 +77,15 @@
                });
 
          });
+
+       $.ajax({url: _getUrl('nameError', 100), beforeSend: function () { return false; }})
+           .done(function (res) {
+               if (!!res) {
+                   $('body').append('<p style="clear:both; color:red;">' + JSON.stringify(res)  + '</p>');
+               }
+           });
+
+
    }
 
    _onloadHandler();
