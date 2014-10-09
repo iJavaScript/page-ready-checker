@@ -92,7 +92,7 @@
                 opts = that.opts;
 
             if (opts.debug) {
-                console.log(" >>>>>>>>>>> Page Ready Executed at ajax stop <<<<<<<<<<<<<< ");
+                console.debug(" >>>>>>>>>>> Page Ready Executed at ajax stop <<<<<<<<<<<<<< ");
             }
             opts.pageReadyFn();
             W.clearTimeout(that._timeout);
@@ -103,7 +103,7 @@
                 opts = this.opts;
 
             if (opts.debug) {
-                console.log(" >>>>>>>>>>> ajax stop <<<<<<<<<<<<<< ", arguments);
+                console.debug(" >>>>>>>>>>> ajax stop <<<<<<<<<<<<<< ", arguments);
             }
 
             if (that._ajaxStopTimer) {
@@ -125,7 +125,7 @@
         ajaxCompleteFn : function (res, a ,xhr) {
             var opts = this.opts;
             if (opts.debug) {
-                console.log("complete", new Date(), !!xhr ? xhr.url : '');
+                console.debug("complete", new Date(), !!xhr ? xhr.url : '');
             }
             if (opts.criticalEls()) {
                 opts.criticalFn();
@@ -141,7 +141,7 @@
         _executeTimeout : function () {
             var opts = this.opts;
             if (opts.debug) {
-                console.log("timeout", new Date());
+                console.debug("timeout", new Date());
             }
             opts.timeoutFn();
         }
