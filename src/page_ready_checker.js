@@ -29,7 +29,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ;(function (W, $, _) {
 
-    var VERSION = "0.0.1";
+    var VERSION = "0.0.2";
 
     var _exists = function (x) { return $(x).length >= 1; },
         _existsAll = function (xs) { return !_.isEmpty(xs) && _.every(xs, _exists); },
@@ -46,9 +46,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          *
          * options {Object}
          *   ^^ simple options
-         *   - criticalEls : List of jQuery selectors for critical elements; OR a function to determine whether critical elements have been loaded.
-         *   - critacalFn : A function will be executed once when all critical elements has been loaded.
-         *   - pageReadyEls:
+         *   - completeFn : A function will be executed at every ajax Complete phase.
+         *   - pageReadyEls: List of jQuery selectors for page ready elements; OR a function to determine whether page ready elements have been loaded.
          *   - pageReadyFn : A function which be executed once when no further ajax call.
          *   - timeoutFn: A function will be executed after timeout when page is not ready.
          *   - debug: display debug informations. default to false.
@@ -59,8 +58,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             var that = this;
             that.opts = _.extend(defaults,
                                  options || {},
-                                 { criticalEls : this._wrapElsToFunc(options.criticalEls),
-                                   criticalFn: this._onceFnDefault(options.criticalFn),
+                                 { completeFn: _.isFunction(options.completeFn) ? options.completeFn : nullFn,
                                    pageReadyEls: this._wrapElsToFunc(options.pageReadyEls),
                                    pageReadyFn: this._onceFnDefault(options.pageReadyFn),
                                    timeoutFn: this._onceFnDefault(options.timeoutFn)
@@ -95,6 +93,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
         /**
          * Wrap those functions that will be execute at ajax complete in order to count functions has been executed.
+         * E.g. PageReadyFn only need to be executed once.
          *
          * @private
          */
@@ -156,9 +155,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             if (opts.debug) {
                 console.debug("complete", new Date(), !!xhr ? xhr.url : '');
             }
-            if (opts.criticalEls()) {
-                opts.criticalFn();
-            }
+            
+            opts.completeFn();
         },
 
         /**
