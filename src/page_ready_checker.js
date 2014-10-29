@@ -25,6 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /**
  * A generic utils that provide several ways to check whether a page is ready.
  * Especially for Single Page App which page has been render via async JavaScript.
+ * 
+ * Repos: https://github.com/iJavaScript/page-ready-checker
  */
 
 ;(function (W, $, _) {
