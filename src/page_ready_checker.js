@@ -122,7 +122,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             if (opts.debug) {
                 console.debug(" >>>>>>>>>>> Page Ready Executed at ajax stop <<<<<<<<<<<<<< ");
             }
-            opts.pageReadyFn();
+            opts.pageReadyFn((!!that._timeout ? opts.ajaxStopTimeout : 0));
             W.clearTimeout(that._timeout);
         },
 
@@ -155,7 +155,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             if (opts.debug) {
                 console.debug("complete", new Date(), !!xhr ? xhr.url : '');
             }
-            
+
             opts.completeFn();
         },
 
@@ -170,7 +170,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             if (opts.debug) {
                 console.debug("timeout", new Date());
             }
-            opts.timeoutFn();
+            opts.timeoutFn(opts.timeout);
         }
 
 
